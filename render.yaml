@@ -1,9 +1,9 @@
 services:
-  - type: worker
+  - type: web
     name: news-digest
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python main.py
+    startCommand: gunicorn app:app
     envVars:
       - key: SMTP_SERVER
         sync: false
@@ -19,5 +19,5 @@ services:
         sync: false
       - key: DEEPSEEK_BASE_URL
         value: https://api.deepseek.com
-      - key: SCHEDULE_DAILY_TIME
-        value: "08:00"
+      - key: TRIGGER_SECRET_KEY
+        sync: false
