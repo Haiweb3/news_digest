@@ -53,9 +53,42 @@ python main.py
 python main.py
 ```
 
-## 部署
+## 部署到 Render
 
-本项目可以部署到 Render 等云平台，实现自动化运行。
+### 方法一：使用 render.yaml（推荐）
+
+1. Fork 或推送代码到 GitHub
+2. 登录 [Render Dashboard](https://dashboard.render.com/)
+3. 点击 "New +" → "Blueprint"
+4. 连接你的 GitHub 仓库
+5. Render 会自动检测 `render.yaml` 并创建服务
+6. 在 Environment 中配置以下环境变量：
+   - `SMTP_SERVER`
+   - `SMTP_PORT`
+   - `SENDER_EMAIL`
+   - `SENDER_PASSWORD`
+   - `RECEIVER_EMAIL`
+   - `DEEPSEEK_API_KEY`
+   - `SCHEDULE_DAILY_TIME`（可选，格式：HH:MM）
+
+### 方法二：手动创建
+
+1. 登录 [Render Dashboard](https://dashboard.render.com/)
+2. 点击 "New +" → "Background Worker"
+3. 连接你的 GitHub 仓库
+4. 配置：
+   - **Name**: news-digest
+   - **Environment**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python main.py`
+5. 添加环境变量（同上）
+6. 点击 "Create Background Worker"
+
+### 注意事项
+
+- Render 免费套餐的 Background Worker 会在 15 分钟无活动后休眠
+- 如果需要持续运行，建议使用付费套餐
+- 定时任务时间在环境变量 `SCHEDULE_DAILY_TIME` 中设置
 
 ## License
 
