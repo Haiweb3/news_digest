@@ -6,17 +6,17 @@ services:
     startCommand: python main.py
     envVars:
       - key: SMTP_SERVER
-        sync: false
+        value: smtp.gmail.com
       - key: SMTP_PORT
-        sync: false
+        value: 465
       - key: SENDER_EMAIL
-        sync: false
+        value: penghaining80@gmail.com
       - key: SENDER_PASSWORD
-        sync: false
+        value: zjrf vgel yqyd jitl
       - key: RECEIVER_EMAIL
-        sync: false
+        value: penghaining80@gmail.com
       - key: DEEPSEEK_API_KEY
-        sync: false
+        value: sk-65ff66cb598e4d4f921883f9e1bee55d
       - key: DEEPSEEK_BASE_URL
         value: https://api.deepseek.com
       - key: SCHEDULE_DAILY_TIME
