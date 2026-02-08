@@ -11,6 +11,9 @@ ENV/
 # Environment variables
 .env
 
+# Server credentials
+server_info.md
+
 # Logs
 *.log
 
