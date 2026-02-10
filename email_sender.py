@@ -4,6 +4,7 @@
 
 import smtplib
 import ssl
+import html
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
@@ -57,53 +58,83 @@ def send_email(subject: str, content: str) -> bool:
 
 
 def markdown_to_html(md_text: str) -> str:
-    """简单的 Markdown 转 HTML"""
+    """轻量 Markdown 转 HTML（优先使用 python-markdown；否则退回简化转换）"""
+    # 1) Prefer a real Markdown parser if available.
+    try:
+        import markdown  # type: ignore
+
+        return markdown.markdown(
+            md_text or "",
+            extensions=["extra", "sane_lists", "nl2br", "smarty"],
+            output_format="html5",
+        )
+    except Exception:
+        pass
+
+    # 2) Fallback: escape then re-introduce a small subset of formatting.
     import re
 
-    html = md_text
+    src = md_text or ""
+    out = html.escape(src)
 
-    # 标题
-    html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
-    html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+    # Headings (must run before <br>)
+    out = re.sub(r"^## (.+)$", r"<h2>\1</h2>", out, flags=re.MULTILINE)
+    out = re.sub(r"^### (.+)$", r"<h3>\1</h3>", out, flags=re.MULTILINE)
 
-    # 粗体
-    html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
+    # Bold
+    out = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", out)
 
-    # 换行
-    html = html.replace('\n', '<br>\n')
+    # Simple unordered list: "- item"
+    def _ul(m: re.Match) -> str:
+        items = m.group(0).strip().splitlines()
+        lis = "".join(f"<li>{re.sub(r'^-\\s+', '', it)}</li>" for it in items)
+        return f"<ul>{lis}</ul>"
+
+    out = re.sub(r"(?:^- .+(?:\n|$))+", _ul, out, flags=re.MULTILINE)
+
+    # Line breaks
+    out = out.replace("\n", "<br>\n")
 
     # 包装
-    html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-            body {{
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                line-height: 1.6;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-                color: #333;
-            }}
-            h2 {{
-                color: #2c3e50;
-                border-bottom: 2px solid #3498db;
-                padding-bottom: 10px;
-                margin-top: 30px;
-            }}
-            strong {{
-                color: #2980b9;
-            }}
-        </style>
-    </head>
-    <body>
-        {html}
-    </body>
-    </html>
-    """
-    return html
+    page = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }}
+        h2 {{
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }}
+        h3 {{
+            color: #34495e;
+            margin-top: 20px;
+        }}
+        strong {{
+            color: #2980b9;
+        }}
+        ul {{
+            padding-left: 20px;
+        }}
+        li {{
+            margin-bottom: 6px;
+        }}
+    </style>
+</head>
+<body>
+    {out}
+</body>
+</html>"""
+    return page
 
 
 def send_news_digest(summary: str) -> bool:

@@ -36,8 +36,23 @@ SUMMARY_TEMPERATURE = float(os.getenv("SUMMARY_TEMPERATURE", "0.7"))
 SUMMARY_MAX_RETRIES = int(os.getenv("SUMMARY_MAX_RETRIES", "3"))
 SUMMARY_MAX_INPUT_CHARS = int(os.getenv("SUMMARY_MAX_INPUT_CHARS", "8000"))
 
+# 晨读分析短文配置（单主题、可朗读）
+MORNING_ARTICLE_TIMEOUT = float(os.getenv("MORNING_ARTICLE_TIMEOUT", "180"))
+MORNING_ARTICLE_MAX_TOKENS = int(os.getenv("MORNING_ARTICLE_MAX_TOKENS", "1800"))
+MORNING_ARTICLE_TEMPERATURE = float(os.getenv("MORNING_ARTICLE_TEMPERATURE", "0.5"))
+MORNING_ARTICLE_MAX_RETRIES = int(os.getenv("MORNING_ARTICLE_MAX_RETRIES", "3"))
+MORNING_ARTICLE_MIN_CHARS = int(os.getenv("MORNING_ARTICLE_MIN_CHARS", "650"))
+MORNING_ARTICLE_MAX_CHARS = int(os.getenv("MORNING_ARTICLE_MAX_CHARS", "1200"))
+
 # RSS 抓取超时（秒）
 RSS_TIMEOUT = int(os.getenv("RSS_TIMEOUT", "15"))
+RSS_MAX_WORKERS = int(os.getenv("RSS_MAX_WORKERS", "8"))
+RSS_MAX_RETRIES = int(os.getenv("RSS_MAX_RETRIES", "2"))
+RSS_BACKOFF_SECONDS = float(os.getenv("RSS_BACKOFF_SECONDS", "1.5"))
+RSS_USER_AGENT = os.getenv(
+    "RSS_USER_AGENT",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+)
 
 # 定时任务配置
 # 24小时制 "HH:MM"，为空则不启用内部定时

@@ -10,7 +10,7 @@ from main import run_once
 app = Flask(__name__)
 
 # 从环境变量获取密钥，用于验证请求
-SECRET_KEY = os.getenv("TRIGGER_SECRET_KEY", "your-secret-key-here")
+SECRET_KEY = os.getenv("TRIGGER_SECRET_KEY", "").strip()
 
 
 @app.route('/')

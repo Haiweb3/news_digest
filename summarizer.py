@@ -2,6 +2,8 @@
 AI 摘要模块 - 使用 DeepSeek API 生成中文新闻摘要
 """
 
+from __future__ import annotations
+
 from openai import OpenAI
 import config
 import time
@@ -46,7 +48,8 @@ def _call_llm(client: OpenAI, prompt: str) -> str:
                 temperature=config.SUMMARY_TEMPERATURE,
                 max_tokens=config.SUMMARY_MAX_TOKENS
             )
-            return response.choices[0].message.content
+            content = response.choices[0].message.content or ""
+            return content.strip()
         except Exception as e:
             if attempt < max_retries - 1:
                 print(f"API 调用失败，{5 * (attempt + 1)} 秒后重试... ({attempt + 1}/{max_retries})")
@@ -158,6 +161,28 @@ def _summarize_category(client: OpenAI, category_key: str, category_text: str) -
     category_title = CATEGORY_TITLES[category_key]
     header = CATEGORY_HEADERS[category_key]
 
+    if not (category_text or "").strip():
+        # 尽量保持格式稳定，避免 LLM 对空输入产生“幻觉”内容
+        if category_key == "crypto":
+            return f"""{header}
+
+暂无重要新闻。
+""".strip()
+        return f"""{header}
+
+### 🇺🇸 美国
+暂无重要新闻。
+
+### 🇪🇺 欧洲
+暂无重要新闻。
+
+### 🇯🇵🇰🇷 日韩
+暂无重要新闻。
+
+### 🇦🇺🇳🇿 澳新
+暂无重要新闻。
+""".strip()
+
     if category_key == "crypto":
         format_block = f"""{header}
 
@@ -199,10 +224,14 @@ def _summarize_category(client: OpenAI, category_key: str, category_text: str) -
 
 
 def _summarize_key_points(client: OpenAI, category_sections: dict) -> str:
+    digest = "\n\n".join(
+        category_sections.get(k, "") for k in ["finance", "politics", "tech", "crypto", "other"]
+    ).strip()
+
     prompt = f"""请根据以下新闻摘要，生成“今日要点”部分（只输出今日要点，不要重复其他内容）。
 
 摘要内容：
-{category_sections}
+{digest}
 
 请严格按以下格式输出：
 
@@ -225,23 +254,28 @@ def generate_summary(news_text: str) -> str:
 
     print("新闻内容较长，启用分块总结...")
     sections = _split_news_by_category(news_text)
+    category_keys = ["finance", "politics", "tech", "crypto", "other"]
     category_outputs = {}
 
-    for key in ["finance", "politics", "tech", "crypto", "other"]:
+    # 并发总结各分类，减少等待时间
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    def _summarize_one(key):
         title = CATEGORY_TITLES[key]
         category_text = sections.get(title, "")
-        category_outputs[key] = _summarize_category(client, key, category_text)
+        return key, _summarize_category(client, key, category_text)
+
+    with ThreadPoolExecutor(max_workers=len(category_keys)) as ex:
+        futures = {ex.submit(_summarize_one, k): k for k in category_keys}
+        for fut in as_completed(futures):
+            key, result = fut.result()
+            category_outputs[key] = result
 
     key_points = _summarize_key_points(client, category_outputs)
 
     return "\n\n".join([
-        category_outputs["finance"],
-        category_outputs["politics"],
-        category_outputs["tech"],
-        category_outputs["crypto"],
-        category_outputs["other"],
-        key_points,
-    ])
+        category_outputs[k] for k in category_keys
+    ] + [key_points])
 
 
 if __name__ == "__main__":

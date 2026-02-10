@@ -48,6 +48,11 @@ cp .env.example .env
 python main.py
 ```
 
+晨读分析短文（单主题、偏 AI×金融）：
+```bash
+python morning_main.py
+```
+
 定时运行（在 config.py 中设置 SCHEDULE_DAILY_TIME）：
 ```bash
 python main.py
